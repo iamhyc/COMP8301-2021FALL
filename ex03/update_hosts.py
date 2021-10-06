@@ -44,7 +44,7 @@ for item in host_file:
 if sys.argv[1]=='ex02':
     # proceed?
     print( json.dumps(host_map, indent=2) )
-    if input('Proceed? (y/N)') not in ['Y', 'y']:
+    if input('Proceed? (y/N) ') not in ['Y', 'y']:
         exit(0)
     # upload the hosts file
     for name,item in host_map.items():
@@ -68,20 +68,20 @@ elif sys.argv[1]=='ex03':
 				f'worker{3*i+1}', f'worker{3*i+2}')
             _file += _body.format(hostname=_name,
                         x1=_item['x1'], x2=_item['x2'], x3=_item['x3'], x1a=_x1a, x2a=_x2a, x3a=_x3a)
-        # fill-in hosts file header
+        #
         _workers = [[f'{x}-x1', f'{x}-x2', f'{x}-x3'] for x in _nodes]
         _workers = list( itertools.chain.from_iterable(_workers) )
         master_hosts.update( {_nodes[0]:[_workers,_file]} )
         pass
     # proceed?
     [print('%s: %s%s'%(k,v[0],v[1])) for k,v in master_hosts.items()]
-    if input('Proceed? (y/N)') not in ['y', 'Y']:
+    if input('Proceed? (y/N) ') not in ['y', 'Y']:
         exit(0)
     # update utils and hosts
     for _master,(_nodes,_hosts) in master_hosts.items():
         # upload the hosts file
         hosts = _hosts%_master
-        SHELL_RUN( f'echo "{hosts}" | {CMD("ssh",_adminpass)} ta@{_master} -T "cat > /tmp/hosts && echo {_adminpass}|sudo -S mv /tmp/hosts /etc/hosts"' )
+        SHELL_RUN( f'echo "{hosts}" | {CMD("ssh",_adminpass)} ta@{_master} -T "cat > /tmp/hosts && echo {_adminpass}|sudo -S cp /tmp/hosts /etc/hosts"' )
         for _node in _nodes:
             hosts = _hosts%_node
             SHELL_RUN( f'echo "{hosts}" | {CMD("ssh",_userpass)} -oProxyCommand="{CMD("ssh",_userpass)} -W %h:%p {_username}@{_master}" {_username}@{_node} -T "cat > /tmp/hosts && echo {_userpass}|sudo -S cp /tmp/hosts /etc/hosts"' )
