@@ -5,8 +5,8 @@ import subprocess as sp
 import json
 
 _header = '''
-127.0.0.1       localhost
-127.0.1.1       %s
+#127.0.0.1       localhost
+#127.0.1.1       %s
 
 # The following lines are desirable for IPv6 capable hosts
 ::1     localhost ip6-localhost ip6-loopback
@@ -22,7 +22,7 @@ _body = '''\
 '''
 _filter = re.compile('(\d+.\d+.\d+.\d+) (student\d+)-(.*)') #e.g., "10.244.40.4 student96-x2"
 _adminpass = 'comp7305'
-_username = 'student'
+_username = 'hduser'
 _userpass = 'student'
 
 SHELL_RUN = lambda x: sp.run(x, stdout=sp.PIPE, stderr=sp.PIPE, check=True, shell=True)
@@ -79,15 +79,16 @@ elif sys.argv[1]=='ex03':
         exit(0)
     # update utils and hosts
     for _master,(_nodes,_hosts) in master_hosts.items():
-        # upload the hosts file
+        # upload hosts file for physical machine
         hosts = _hosts%_master
         SHELL_RUN( f'echo "{hosts}" | {CMD("ssh",_adminpass)} ta@{_master} -T "cat > /tmp/hosts && echo {_adminpass}|sudo -S cp /tmp/hosts /etc/hosts"' )
+        # upload hosts file for containers
         for _node in _nodes:
             hosts = _hosts%_node
-            SHELL_RUN( f'echo "{hosts}" | {CMD("ssh",_userpass)} -oProxyCommand="{CMD("ssh",_userpass)} -W %h:%p {_username}@{_master}" {_username}@{_node} -T "cat > /tmp/hosts && echo {_userpass}|sudo -S cp /tmp/hosts /etc/hosts"' )
+            SHELL_RUN( f'echo "{hosts}" | {CMD("ssh",_userpass)} -oProxyCommand="{CMD("ssh",_adminpass)} -W %h:%p ta@{_master}" {_username}@{_node} -T "cat > /tmp/hosts_{_username} && echo {_userpass}|sudo -S cp /tmp/hosts_{_username} /etc/hosts"' )
         print(f'"hosts" file updated for {_nodes}.')
         # upload utils for master container
-        SHELL_RUN( f'{CMD("scp",_userpass)} -oProxyCommand="{CMD("ssh",_userpass)} -W %h:%p {_username}@{_master}" -r ./utils ./terasort {_username}@{_nodes[0]}:~/' )
+        SHELL_RUN( f'{CMD("scp",_userpass)} -oProxyCommand="{CMD("ssh",_adminpass)} -W %h:%p ta@{_master}" -r ./utils ./terasort {_username}@{_nodes[0]}:~/' )
         print(f'"utils" && "terasort" uploaded for master container: {_nodes[0]}.')
     pass
 else:

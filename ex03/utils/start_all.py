@@ -3,12 +3,12 @@ import os
 import subprocess as sp
 SHELL_RUN = lambda x: sp.run(x, stdout=sp.PIPE, stderr=sp.PIPE, check=True, shell=True)
 
-workers = [f'worker{i}' for i in range(1,12)]
-_username = 'student'
-_password = 'student'
-
 hadoop_home = os.environ['HADOOP_HOME']
 spark_home  = os.environ['SPARK_HOME']
+
+workers = [x.strip() for x in open(f'{hadoop_home}/etc/hadoop/slaves').readlines()]
+_username = 'hduser'
+_password = 'student'
 
 # start HDFS
 print('Hadoop HDFS starting ...')
@@ -26,3 +26,7 @@ for node in workers:
 SHELL_RUN( 'hdfs dfs -mkdir -p /tmp/sparkLog' )
 SHELL_RUN( 'hdfs dfs -chmod -R 777 /tmp/sparkLog' )
 
+# start history servers
+print('History Servers starting ...')
+os.system( 'mr-jobhistory-daemon.sh start historyserver' )
+os.system( 'start-history-server.sh' )
